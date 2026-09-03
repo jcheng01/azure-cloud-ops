@@ -1,77 +1,132 @@
-# Azure CloudOps Portfolio
+# Azure CloudOps Dashboard
 
-A production-style Azure portfolio project demonstrating application hosting, infrastructure as code, monitoring, governance, security, and CI/CD.
+A public Azure operations portfolio that demonstrates how a cloud engineer deploys, secures, monitors, governs, and automates a small Azure environment.
 
-> **Project status:** Foundation created. Application deployment and Azure integration are in progress.
+> **Current status:** V1 source is ready for Azure Static Web Apps deployment. The dashboard clearly displays sample metrics until live Azure integration is implemented.
 
 ## Project goal
 
-This project is designed to demonstrate practical junior cloud engineering skills beyond certification knowledge. It will host a public web application while showing how the surrounding Azure environment is deployed, secured, monitored, governed, and maintained.
+This project goes beyond certification knowledge by presenting a production-style CloudOps workflow: application hosting, infrastructure as code, networking, identity, observability, governance, CI/CD, and cost control.
 
-## Planned architecture
+## Target architecture
 
 ```mermaid
 flowchart TD
     U["Public visitor"] --> SWA["Azure Static Web Apps"]
     SWA --> API["Azure Functions API"]
+    API --> RG["Azure Resource Graph"]
     API --> MON["Application Insights"]
-
     TF["Terraform"] --> INFRA["Azure infrastructure"]
     GH["GitHub Actions"] --> SWA
     GH --> TF
-
     INFRA --> NET["VNet, subnets, NSGs"]
     INFRA --> GOV["RBAC, Policy, tags"]
-    INFRA --> OPS["Monitor, alerts, budgets"]
+    INFRA --> OPS["Monitor, alerts, budget"]
 ```
+
+## Current V1
+
+- `src/index.html` contains a responsive HTML/CSS/JavaScript dashboard.
+- `api/src/functions/overview.js` exposes `GET /api/overview` using Azure Functions Node.js v4.
+- The API currently returns sample data so deployment can be validated before Azure Resource Graph integration.
+- `src/staticwebapp.config.json` defines SPA fallback, API routing, and security headers.
+- `api/package-lock.json` provides reproducible dependency installation.
 
 ## Technologies
 
 | Area | Services and tools |
 |---|---|
-| Application | React, Azure Static Web Apps, Azure Functions |
-| Infrastructure | Azure Virtual Network, subnets, NSGs |
-| Security | Microsoft Entra ID, RBAC, managed identities |
+| Front end | HTML, CSS, JavaScript, Azure Static Web Apps |
+| API | Azure Functions |
+| Infrastructure | Terraform, VNet, subnets, NSGs |
+| Identity and security | Managed identity, RBAC, HTTPS |
 | Operations | Azure Monitor, Application Insights, alerts, budgets |
 | Governance | Azure Policy and resource tags |
-| Automation | Terraform and GitHub Actions |
+| Automation | GitHub Actions |
 
-## Intended repository structure
+## Repository structure
 
 ```text
 azure-cloud-ops/
-├── app/                    # Front-end application
-├── api/                    # Azure Functions API
-├── infra/                  # Terraform configuration
-├── docs/                   # Architecture and operational documentation
-├── .github/workflows/      # CI/CD workflows
+├── src/
+│   ├── index.html
+│   └── staticwebapp.config.json
+├── api/
+│   ├── host.json
+│   ├── package.json
+│   ├── package-lock.json
+│   └── src/functions/
+│       └── overview.js
+├── docs/
+│   └── architecture.md
+├── .github/workflows/       # Azure adds the deployment workflow
 ├── .gitignore
 ├── LICENSE
 └── README.md
 ```
 
-Azure Static Web Apps may create its deployment workflow automatically when the Azure resource is connected to this repository.
+## Local preview
+
+Static front end:
+
+```powershell
+cd src
+python -m http.server 8080
+```
+
+Open `http://localhost:8080`.
+
+Front end and managed API with the Azure Static Web Apps CLI:
+
+```powershell
+npm install -g @azure/static-web-apps-cli
+cd api
+npm install
+cd ..
+swa start src --api-location api
+```
+
+Open `http://localhost:4280`.
+
+## Azure Static Web Apps deployment settings
+
+When creating the Azure Static Web App, connect this repository and use:
+
+| Setting | Value |
+|---|---|
+| Branch | `main` |
+| App location | `src` |
+| API location | `api` |
+| Output location | Leave blank |
+
+Azure will create the GitHub Actions workflow and deployment secret automatically.
+
+## Planned live-data security model
+
+The later standalone Function App will use:
+
+- A system-assigned managed identity
+- The built-in **Reader** role scoped only to the CloudOps lab resource group
+- Azure Resource Graph for resource inventory
+- HTTPS-only access
+- CORS restricted to the deployed Static Web Apps hostname
+- No service-principal secrets in source control
 
 ## Delivery roadmap
 
 - [x] Create the public GitHub repository
-- [x] Add project documentation and repository safeguards
-- [ ] Add and validate the front-end application
-- [ ] Deploy the application with Azure Static Web Apps
-- [ ] Add an Azure Functions API
-- [ ] Provision supporting resources with Terraform
-- [ ] Add monitoring, dashboards, alerts, and a cost budget
-- [ ] Apply RBAC, tags, and Azure Policy
-- [ ] Document troubleshooting and operational procedures
-- [ ] Add screenshots and the public application URL
+- [x] Add the V1 dashboard and sample API
+- [x] Add repository documentation and secret-safe ignore rules
+- [ ] Deploy with Azure Static Web Apps
+- [ ] Add Terraform infrastructure
+- [ ] Configure managed identity and scoped RBAC
+- [ ] Replace sample metrics with Azure-backed data
+- [ ] Add Application Insights, alerts, and a cost budget
+- [ ] Add screenshots, troubleshooting notes, and the public URL
 
 ## Cost approach
 
-The project will favor free or low-cost service tiers, conservative logging, budget alerts, and resource cleanup procedures so it can remain suitable for an Azure pay-as-you-go subscription.
-
-## Security
-
-Credentials, Terraform state, local environment files, and deployment tokens must never be committed. Azure and GitHub secrets will be used for deployment credentials.
+The project favors free or serverless components, conservative telemetry retention, budget alerts, and short-lived infrastructure labs so it remains suitable for an Azure pay-as-you-go subscription.
 
 ## Author
 
