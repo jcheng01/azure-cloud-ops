@@ -17,7 +17,18 @@ Each subnet is associated with a dedicated network security group:
 | `snet-app` | `nsg-app` |
 | `snet-data` | `nsg-data` |
 
-The NSGs currently contain only Azure's default security rules. Custom tier-to-tier rules will be added after the required application traffic is defined.
+The custom inbound rules model a segmented three-tier workload:
+
+| NSG | Priority | Action | Source | Destination | TCP port |
+|---|---:|---|---|---|---:|
+| `nsg-web` | 100 | Allow | `Internet` | `10.20.1.0/24` | 443 |
+| `nsg-web` | 4000 | Deny | `VirtualNetwork` | `10.20.1.0/24` | Any |
+| `nsg-app` | 100 | Allow | `10.20.1.0/24` | `10.20.2.0/24` | 8080 |
+| `nsg-app` | 4000 | Deny | `VirtualNetwork` | `10.20.2.0/24` | Any |
+| `nsg-data` | 100 | Allow | `10.20.2.0/24` | `10.20.3.0/24` | 443 |
+| `nsg-data` | 4000 | Deny | `VirtualNetwork` | `10.20.3.0/24` | Any |
+
+The priority-4000 rules override Azure's default `AllowVnetInBound` rule while allowing the intended flows first. NSGs are stateful, so response traffic for an allowed connection does not require a matching reverse-direction inbound rule.
 
 The resource group's location is discovered with an AzureRM data source, so it is not duplicated in configuration. This phase does not create or modify the resource group.
 
@@ -49,7 +60,7 @@ terraform plan -out main.tfplan
 terraform apply main.tfplan
 ```
 
-Review the plan before applying. A completely new deployment should show ten resources to add: one virtual network, three subnets, three NSGs, and three subnet-to-NSG associations. If the VNet and subnets are already managed by this Terraform state, the plan should instead show six resources to add.
+Review the plan before applying. A completely new deployment should show sixteen resources to add: one virtual network, three subnets, three NSGs, three subnet-to-NSG associations, and six custom rules. If the network and NSG resources are already managed by this Terraform state, the plan should show six rules to add.
 
 ## Verify with Azure CLI
 
