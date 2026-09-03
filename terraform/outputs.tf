@@ -25,3 +25,13 @@ output "subnets" {
     }
   }
 }
+
+output "network_security_groups" {
+  description = "Created network security groups keyed by subnet name."
+  value = {
+    for subnet_name, nsg in azurerm_network_security_group.cloudops : subnet_name => {
+      id   = nsg.id
+      name = nsg.name
+    }
+  }
+}
