@@ -1,0 +1,3 @@
+# Copy this file to terraform.tfvars and replace the placeholder.
+# terraform.tfvars is ignored by Git and must not be committed.
+subscription_id = "00000000-0000-0000-0000-000000000000"
