@@ -6,6 +6,6 @@ terraform {
     key                  = "azure-cloud-ops.tfstate"
 
     use_azuread_auth = true
-    use_cli         = true
+    use_cli          = true
   }
 }
