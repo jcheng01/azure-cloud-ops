@@ -26,6 +26,7 @@ local.settings.json
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+*.tfplan
 crash.log
 crash.*.log
 *.tfvars
