@@ -13,11 +13,11 @@ resource "azurerm_federated_identity_credential" "github_actions_main" {
 
   audience = ["api://AzureADTokenExchange"]
   issuer   = "https://token.actions.githubusercontent.com"
-  subject  = "repo:jcheng01/azure-cloud-ops:ref:refs/heads/main"
+  subject  = "repo:jcheng01@83311317/azure-cloud-ops@1356157667:ref:refs/heads/main"
 }
 
 resource "azurerm_role_assignment" "github_actions_function_deploy" {
-  scope                = azurerm_function_app_flex_consumption.cloudops.id
+  scope                            = azurerm_function_app_flex_consumption.cloudops.id
   role_definition_name             = "Website Contributor"
   principal_id                     = azurerm_user_assigned_identity.github_actions.principal_id
   principal_type                   = "ServicePrincipal"
