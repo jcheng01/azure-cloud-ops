@@ -381,7 +381,7 @@
           <div class="health-ring"></div>
           <div class="h">
             <div class="big">CloudOps architecture demonstration</div>
-            <div class="small">Sample metrics · live Azure integration is planned</div>
+            <div class="small" id="overviewSummary">Sample metrics · live Azure integration is planned</div>
           </div>
           <span class="live"><i></i> sample</span>
         </div>
@@ -390,10 +390,10 @@
           <div class="card">
             <div class="section-head"><h2>Environment</h2><p>Illustrative state for the planned Azure lab</p></div>
             <div class="readout">
-              <div class="line"><span class="lk">Environment</span><span class="lv">Portfolio lab</span></div>
-              <div class="line"><span class="lk">Status</span><span class="lv"><span class="livedot"></span><span class="glive">Sample data</span></span></div>
-              <div class="line"><span class="lk">Region</span><span class="lv">East US</span></div>
-              <div class="line"><span class="lk">Resources</span><span class="lv" data-count="11">0</span></div>
+              <div class="line"><span class="lk">Environment</span><span class="lv" id="environmentValue">Portfolio lab</span></div>
+              <div class="line"><span class="lk">Status</span><span class="lv"><span class="livedot"></span><span class="glive" id="statusValue">Sample data</span></span></div>
+              <div class="line"><span class="lk">Region</span><span class="lv" id="regionValue">East US</span></div>
+              <div class="line"><span class="lk">Resources</span><span class="lv" id="resourceCount" data-count="11">0</span></div>
               <div class="line"><span class="lk">Last deployment</span><span class="lv"><span data-count="4">0</span> min ago</span></div>
               <div class="line"><span class="lk">IaC</span><span class="lv logoval">
                 <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#7B42BC" d="M1.44 0v7.575l6.56 3.79V3.788L1.44 0Zm21.12 4.227-6.56 3.79v7.575l6.56-3.79V4.227ZM8.72 4.23v7.573l6.56 3.79V8.02L8.72 4.23Zm0 8.404v7.576L15.28 24v-7.575l-6.56-3.79Z"/></svg>
@@ -401,7 +401,7 @@
               <div class="line"><span class="lk">CI/CD</span><span class="lv logoval">
                 <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#181717" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
                 GitHub Actions</span></div>
-              <div class="line"><span class="lk">Monthly budget</span><span class="lv">$5</span></div>
+              <div class="line"><span class="lk">Monthly budget</span><span class="lv" id="budgetValue">$5</span></div>
             </div>
           </div>
 
@@ -720,11 +720,65 @@
     g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
   });
 
+  // Standalone Azure Function API
+  var overviewApiUrl =
+    "https://func-azure-cloudops-jcheng01.azurewebsites.net/api/overview";
+
+  async function loadOverview() {
+    var statusValue = document.getElementById("statusValue");
+    var summary = document.getElementById("overviewSummary");
+
+    try {
+      statusValue.textContent = "Loading Azure data";
+
+      var response = await fetch(overviewApiUrl, {
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("API returned HTTP " + response.status);
+      }
+
+      var data = await response.json();
+
+      document.getElementById("environmentValue").textContent =
+        data.environment || "Portfolio lab";
+
+      statusValue.textContent = data.status || "Live Azure data";
+
+      document.getElementById("regionValue").textContent =
+        data.region || "East US";
+
+      var resourceElement = document.getElementById("resourceCount");
+      var resourceCount = Number(data.resources || 0);
+
+      resourceElement.setAttribute("data-count", String(resourceCount));
+
+      document.getElementById("budgetValue").textContent =
+        "$" + Number(data.monthlyBudget || 0);
+
+      summary.textContent =
+        resourceCount +
+        " resources · live Azure Resource Graph · managed identity";
+
+      runCounts();
+    } catch (error) {
+      console.error("Unable to load Azure overview:", error);
+
+      statusValue.textContent = "API unavailable";
+      summary.textContent =
+        "Unable to retrieve live Azure Resource Graph data";
+    }
+  }
+
   // routing
   window.addEventListener("hashchange", function () {
     setActive((location.hash || "#overview").slice(1));
   });
   setActive((location.hash || "#overview").slice(1));
+  loadOverview();
 </script>
 </body>
 </html>
