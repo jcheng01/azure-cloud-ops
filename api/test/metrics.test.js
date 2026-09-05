@@ -31,10 +31,8 @@ test("findMetric matches Azure metric names case-insensitively", () => {
 
 test("metric helpers aggregate time-series data", () => {
   assert.equal(sumMetric(findMetric(payload, "Requests")), 20);
-  assert.equal(
-    averageMetric(findMetric(payload, "AverageResponseTime")),
-    0.15
-  );
+  const average = averageMetric(findMetric(payload, "AverageResponseTime"));
+  assert.ok(Math.abs(average - 0.15) < Number.EPSILON * 2);
 });
 
 test("summarizeMetrics returns dashboard-ready values", () => {
