@@ -64,6 +64,9 @@ resource "azurerm_function_app_flex_consumption" "cloudops" {
     ApplicationInsightsAgent_EXTENSION_VERSION = "~3"
     AZURE_SUBSCRIPTION_ID                      = var.subscription_id
     RESOURCE_GROUP_NAME                        = data.azurerm_resource_group.cloudops.name
+    PRODUCTION_RESOURCE_GROUP_NAME             = data.azurerm_resource_group.cloudops_prod.name
+    FUNCTION_RESOURCE_ID                       = "/subscriptions/${var.subscription_id}/resourceGroups/${data.azurerm_resource_group.cloudops_prod.name}/providers/Microsoft.Web/sites/func-azure-cloudops-jcheng01"
+    MONTHLY_BUDGET                             = tostring(var.monthly_budget_amount)
   }
 
   identity {
@@ -89,6 +92,13 @@ resource "azurerm_function_app_flex_consumption" "cloudops" {
 
 resource "azurerm_role_assignment" "function_reader" {
   scope                = data.azurerm_resource_group.cloudops.id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_function_app_flex_consumption.cloudops.identity[0].principal_id
+  principal_type       = "ServicePrincipal"
+}
+
+resource "azurerm_role_assignment" "function_prod_reader" {
+  scope                = data.azurerm_resource_group.cloudops_prod.id
   role_definition_name = "Reader"
   principal_id         = azurerm_function_app_flex_consumption.cloudops.identity[0].principal_id
   principal_type       = "ServicePrincipal"

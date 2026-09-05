@@ -52,9 +52,21 @@ variable "tags" {
     Project     = "AzureCloudOps"
   }
 }
+
 variable "alert_email_address" {
-  description = "Email address that receives Azure Monitor alerts."
+  description = "Email address that receives Azure Monitor and budget alerts."
   type        = string
   sensitive   = true
   nullable    = false
+}
+
+variable "monthly_budget_amount" {
+  description = "Monthly Azure budget for both CloudOps resource groups, in USD."
+  type        = number
+  default     = 5
+
+  validation {
+    condition     = var.monthly_budget_amount > 0
+    error_message = "The monthly budget amount must be greater than zero."
+  }
 }

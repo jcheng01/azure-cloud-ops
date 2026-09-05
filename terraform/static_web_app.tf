@@ -10,6 +10,8 @@ resource "azurerm_static_web_app" "dashboard" {
   sku_tier = "Free"
   sku_size = "Free"
 
+  tags = local.production_tags
+
   lifecycle {
     ignore_changes = [
       repository_url,

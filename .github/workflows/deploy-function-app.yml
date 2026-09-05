@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "api/**"
+      - ".github/workflows/deploy-function-app.yml"
   workflow_dispatch:
 
 permissions:
