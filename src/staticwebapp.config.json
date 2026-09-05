@@ -1,16 +1,19 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/api/*", "/assets/*", "*.{css,js,png,jpg,svg,ico,woff,woff2}"]
+    "exclude": ["/assets/*", "*.{css,js,png,jpg,svg,ico,woff,woff2}"]
   },
-  "routes": [
-    { "route": "/api/*", "methods": ["GET"] }
-  ],
   "responseOverrides": {
-    "404": { "rewrite": "/index.html" }
+    "404": {
+      "rewrite": "/index.html"
+    }
   },
   "globalHeaders": {
+    "Content-Security-Policy": "default-src 'self'; connect-src 'self' https://func-azure-cloudops-jcheng01.azurewebsites.net; style-src 'self'; script-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "strict-origin-when-cross-origin"
+    "X-Frame-Options": "DENY"
   }
 }

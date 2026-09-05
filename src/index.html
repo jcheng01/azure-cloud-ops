@@ -1,784 +1,214 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Azure CloudOps Lab</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --console-0: #0b0d12;
-    --console-1: #0f1219;
-    --console-2: #151925;
-    --glass-line: rgba(255,255,255,.1);
-    --glass-text: #e9ebf0;
-    --glass-soft: #9aa0ac;
-    --glass-faint: #656b78;
-
-    --paper: #f6f7f9;
-    --surface: #ffffff;
-    --hairline: #e2e4e8;
-    --hairline-soft: #eef0f3;
-    --ink: #1d1d1f;
-    --ink-soft: #565860;
-    --ink-faint: #86868b;
-
-    --azure: #0071e3;
-    --azure-glow: #0a84ff;
-    --azure-wash: #eef4fd;
-    --healthy: #30d158;
-    --healthy-deep: #248a3d;
-    --amber: #ff9f0a;
-
-    --radius: 14px;
-    --radius-sm: 10px;
-
-    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: "SF Mono", "JetBrains Mono", ui-monospace, "Menlo", monospace;
-
-    --sidebar: 236px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { -webkit-text-size-adjust: 100%; }
-  body {
-    font-family: var(--sans);
-    background: var(--paper);
-    color: var(--ink);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    line-height: 1.5;
-    letter-spacing: -0.011em;
-  }
-  a { color: inherit; text-decoration: none; }
-  :focus-visible { outline: 2px solid var(--azure); outline-offset: 2px; border-radius: 4px; }
-
-  /* ---------- app shell ---------- */
-  .app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
-
-  aside {
-    background: var(--surface);
-    border-right: 1px solid var(--hairline);
-    position: sticky; top: 0; height: 100vh;
-    display: flex; flex-direction: column;
-    padding: 18px 14px;
-  }
-  .brand {
-    display: flex; align-items: center; gap: 10px;
-    font-weight: 600; font-size: 15px; letter-spacing: -0.02em;
-    padding: 6px 8px 4px;
-  }
-  .brand-mark {
-    width: 24px; height: 24px; border-radius: 7px; flex: none; position: relative;
-    background: linear-gradient(150deg, var(--azure-glow), var(--azure));
-    box-shadow: 0 1px 5px rgba(0,113,227,.4);
-  }
-  .brand-mark::after {
-    content: ""; position: absolute; inset: 7px;
-    border: 1.6px solid rgba(255,255,255,.92); border-radius: 3px;
-    border-bottom-color: transparent; border-right-color: transparent;
-  }
-  .brand small { display: block; font-size: 11px; color: var(--ink-faint); font-weight: 500; letter-spacing: 0; }
-
-  .nav { margin-top: 20px; display: flex; flex-direction: column; gap: 2px; }
-  .nav a {
-    display: flex; align-items: center; gap: 11px;
-    padding: 9px 10px; border-radius: var(--radius-sm);
-    font-size: 14px; font-weight: 500; color: var(--ink-soft);
-    transition: background .15s ease, color .15s ease;
-  }
-  .nav a svg { width: 18px; height: 18px; flex: none; stroke: currentColor; }
-  .nav a:hover { background: var(--paper); color: var(--ink); }
-  .nav a.active { background: var(--azure-wash); color: var(--azure); }
-
-  .side-status {
-    margin-top: auto; border-top: 1px solid var(--hairline-soft);
-    padding: 14px 8px 4px; font-size: 12.5px; color: var(--ink-faint);
-  }
-  .side-status .row { display: flex; justify-content: space-between; padding: 3px 0; }
-  .side-status .row b { color: var(--ink-soft); font-weight: 500; }
-  .side-status .dot { color: var(--healthy-deep); display: inline-flex; align-items: center; gap: 6px; }
-  .side-status .dot i {
-    width: 9px; height: 9px; border-radius: 50%; background: var(--healthy);
-    box-shadow: 0 0 0 0 rgba(48,209,88,.75); animation: pulse 1.6s ease-out infinite; display: inline-block;
-  }
-
-  /* ---------- main ---------- */
-  main { min-width: 0; display: flex; flex-direction: column; }
-  .topbar {
-    position: sticky; top: 0; z-index: 20;
-    background: rgba(246,247,249,.8);
-    backdrop-filter: saturate(180%) blur(18px);
-    -webkit-backdrop-filter: saturate(180%) blur(18px);
-    border-bottom: 1px solid var(--hairline);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 28px; height: 56px;
-  }
-  .topbar h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
-  .topbar .meta { display: flex; align-items: center; gap: 16px; font-size: 12.5px; color: var(--ink-faint); }
-  .env-pill {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 12.5px; font-weight: 500; color: var(--healthy-deep);
-    background: rgba(48,209,88,.1); border: 1px solid rgba(48,209,88,.22);
-    padding: 4px 11px 4px 9px; border-radius: 100px;
-  }
-  .env-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--healthy); display: inline-block; box-shadow: 0 0 0 0 rgba(48,209,88,.75); animation: pulse 1.6s ease-out infinite; }
-  .synced { font-family: var(--mono); }
-
-  .content { padding: 28px; max-width: 1040px; width: 100%; margin: 0 auto; }
-  .page { display: none; }
-  .page.active { display: block; animation: fade .3s ease; }
-  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-  /* ---------- shared bits ---------- */
-  .section-head { margin: 4px 0 16px; }
-  .section-head h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
-  .section-head p { font-size: 13px; color: var(--ink-faint); margin-top: 3px; }
-  .section-head.spaced { margin-top: 34px; }
-
-  .card {
-    background: var(--surface); border: 1px solid var(--hairline);
-    border-radius: var(--radius); padding: 20px;
-  }
-  .grid { display: grid; gap: 16px; }
-  .g2 { grid-template-columns: 1fr 1fr; }
-  .g3 { grid-template-columns: repeat(3, 1fr); }
-  .g4 { grid-template-columns: repeat(4, 1fr); }
-  @media (max-width: 900px) { .g4 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 620px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
-
-  .mono { font-family: var(--mono); }
-  .ok { color: var(--healthy-deep); }
-  .check { display: inline-flex; align-items: center; gap: 7px; color: var(--healthy-deep); font-weight: 500; }
-  .check svg { width: 15px; height: 15px; }
-
-  /* ---------- live indicators ---------- */
-  .glive { color: var(--healthy-deep); }
-  .livedot {
-    width: 9px; height: 9px; border-radius: 50%; background: var(--healthy);
-    display: inline-block; vertical-align: middle; margin-right: 7px;
-    box-shadow: 0 0 0 0 rgba(48,209,88,.7); animation: pulse 1.6s ease-out infinite;
-  }
-
-  /* brand logos */
-  .logoval { display: inline-flex; align-items: center; gap: 8px; }
-  .logo { width: 15px; height: 15px; flex: none; display: block; }
-
-  /* metric tile */
-  .tile { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius); padding: 16px 18px; }
-  .tile .k { font-size: 12.5px; color: var(--ink-faint); }
-  .tile .v { margin-top: 6px; font-family: var(--mono); font-size: 26px; font-weight: 500; letter-spacing: -0.02em; }
-  .tile .v small { font-size: 13px; color: var(--ink-faint); font-weight: 400; }
-  .tile .trend { margin-top: 6px; font-size: 12px; color: var(--ink-faint); }
-  .tile .trend.up { color: var(--healthy-deep); }
-
-  /* readout (definition list) */
-  .readout { display: grid; grid-template-columns: 1fr; gap: 0; }
-  .readout .line {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 2px; border-bottom: 1px solid var(--hairline-soft);
-  }
-  .readout .line:last-child { border-bottom: none; }
-  .readout .line .lk { font-size: 14px; color: var(--ink-soft); }
-  .readout .line .lv { font-family: var(--mono); font-size: 14px; font-weight: 500; }
-
-  /* tables */
-  table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
-  table.data th {
-    text-align: left; font-weight: 600; color: var(--ink-faint); font-size: 12px;
-    padding: 0 14px 10px; border-bottom: 1px solid var(--hairline);
-  }
-  table.data td { padding: 12px 14px; border-bottom: 1px solid var(--hairline-soft); vertical-align: middle; }
-  table.data tr:last-child td { border-bottom: none; }
-  table.data td.mono, table.data th.mono { font-family: var(--mono); }
-  .chip {
-    display: inline-block; font-family: var(--mono); font-size: 11.5px;
-    padding: 2px 8px; border-radius: 6px; background: var(--paper); border: 1px solid var(--hairline-soft);
-  }
-  .chip.allow { color: var(--healthy-deep); background: rgba(48,209,88,.09); border-color: rgba(48,209,88,.2); }
-  .chip.deny  { color: #c0392b; background: rgba(255,59,48,.08); border-color: rgba(255,59,48,.2); }
-
-  /* utilization bar */
-  .util { display: flex; align-items: center; gap: 10px; }
-  .util .bar { flex: 1; height: 6px; border-radius: 100px; background: var(--hairline); overflow: hidden; max-width: 140px; }
-  .util .bar span { display: block; height: 100%; background: var(--azure); border-radius: 100px; }
-  .util .num { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); min-width: 66px; }
-
-  /* ---------- overview status hero (dark) ---------- */
-  .status-hero {
-    background:
-      radial-gradient(600px 300px at 90% -20%, rgba(10,132,255,.28), transparent 60%),
-      linear-gradient(160deg, var(--console-0), var(--console-1));
-    color: var(--glass-text); border: 1px solid transparent;
-    border-radius: var(--radius); padding: 22px 24px;
-    display: flex; align-items: center; gap: 16px;
-  }
-  .health-ring {
-    width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center;
-    background: radial-gradient(circle, rgba(48,209,88,.28), transparent 70%);
-  }
-  .health-ring::before {
-    content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--healthy);
-    box-shadow: 0 0 12px 1px rgba(48,209,88,.7);
-  }
-  .status-hero .h .big { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
-  .status-hero .h .small { font-size: 13px; color: var(--glass-soft); margin-top: 2px; }
-  .status-hero .live {
-    margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--healthy);
-    display: inline-flex; align-items: center; gap: 7px;
-  }
-  .status-hero .live i { width: 9px; height: 9px; border-radius: 50%; background: var(--healthy); display: inline-block;
-    box-shadow: 0 0 0 0 rgba(48,209,88,.75); animation: pulse 1.6s ease-out infinite; }
-
-  /* ---------- architecture diagram ---------- */
-  .arch-wrap { display: grid; grid-template-columns: 1fr 288px; gap: 16px; }
-  @media (max-width: 900px) { .arch-wrap { grid-template-columns: 1fr; } }
-  .arch-canvas {
-    background:
-      radial-gradient(500px 260px at 50% 0%, rgba(0,113,227,.05), transparent 70%),
-      var(--surface);
-    border: 1px solid var(--hairline); border-radius: var(--radius); padding: 20px; overflow-x: auto;
-  }
-  .arch-svg { width: 100%; min-width: 520px; display: block; }
-  .arch-node { cursor: pointer; }
-  .arch-node rect { transition: fill .15s ease, stroke .15s ease; }
-  .arch-node:hover rect, .arch-node.sel rect { fill: var(--azure-wash); stroke: var(--azure); }
-  .arch-node .an-t { font-family: var(--sans); font-size: 12px; font-weight: 600; fill: var(--ink); pointer-events: none; }
-  .arch-edge { stroke: var(--hairline); stroke-width: 1.6; fill: none; }
-  .detail h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
-  .detail .tag { font-family: var(--mono); font-size: 11.5px; color: var(--azure); background: var(--azure-wash);
-    border: 1px solid #d5e5fb; padding: 2px 9px; border-radius: 100px; display: inline-block; margin: 8px 0 12px; }
-  .detail p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; }
-  .detail dl { margin-top: 14px; font-size: 13px; }
-  .detail dl div { display: flex; justify-content: space-between; padding: 7px 0; border-top: 1px solid var(--hairline-soft); }
-  .detail dl dt { color: var(--ink-faint); }
-  .detail dl dd { font-family: var(--mono); }
-
-  /* ---------- security flow ---------- */
-  .secflow { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
-  .secflow .n {
-    display: flex; align-items: center; gap: 13px;
-    background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-sm);
-    padding: 13px 16px; min-width: 260px;
-  }
-  .secflow .n .ic { width: 34px; height: 34px; border-radius: 9px; background: var(--azure-wash); color: var(--azure);
-    display: grid; place-items: center; flex: none; }
-  .secflow .n .ic svg { width: 18px; height: 18px; stroke: currentColor; }
-  .secflow .n .t { font-weight: 600; font-size: 14px; }
-  .secflow .n .d { font-size: 12px; color: var(--ink-faint); }
-  .secflow .arrow { width: 2px; height: 20px; background: var(--hairline); margin-left: 32px; position: relative; }
-  .secflow .arrow::after { content: ""; position: absolute; bottom: -1px; left: -3px; width: 8px; height: 8px;
-    border-right: 2px solid var(--hairline); border-bottom: 2px solid var(--hairline); transform: rotate(45deg); }
-
-  .posture { display: flex; flex-direction: column; gap: 0; }
-  .posture .p {
-    display: flex; align-items: flex-start; gap: 12px; padding: 13px 2px; border-bottom: 1px solid var(--hairline-soft);
-  }
-  .posture .p:last-child { border-bottom: none; }
-  .posture .p svg { width: 18px; height: 18px; flex: none; margin-top: 1px; color: var(--healthy-deep); }
-  .posture .p .t { font-size: 14px; font-weight: 500; }
-  .posture .p .d { font-size: 12.5px; color: var(--ink-faint); margin-top: 1px; }
-
-  /* ---------- monitoring ---------- */
-  .spark { width: 100%; height: 46px; display: block; margin-top: 10px; }
-  .compliance .p { display: flex; align-items: center; justify-content: space-between; padding: 13px 2px;
-    border-bottom: 1px solid var(--hairline-soft); }
-  .compliance .p:last-child { border-bottom: none; }
-  .compliance .p .t { font-size: 14px; }
-
-  /* mobile nav */
-  .mobile-tabs { display: none; }
-  @media (max-width: 760px) {
-    .app { grid-template-columns: 1fr; }
-    aside { display: none; }
-    .mobile-tabs {
-      display: flex; gap: 4px; overflow-x: auto; position: sticky; top: 56px; z-index: 15;
-      background: var(--surface); border-bottom: 1px solid var(--hairline); padding: 8px 12px;
-    }
-    .mobile-tabs a { white-space: nowrap; font-size: 13px; font-weight: 500; color: var(--ink-soft);
-      padding: 6px 12px; border-radius: 100px; }
-    .mobile-tabs a.active { background: var(--azure-wash); color: var(--azure); }
-    .content { padding: 20px 16px; }
-    .arch-wrap { grid-template-columns: 1fr; }
-  }
-
-  @keyframes pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(48,209,88,.75); transform: scale(1); }
-    60%  { box-shadow: 0 0 0 11px rgba(48,209,88,0); transform: scale(1.25); }
-    100% { box-shadow: 0 0 0 0 rgba(48,209,88,0); transform: scale(1); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; }
-    .page.active { animation: none; }
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="description"
+    content="A live Azure CloudOps portfolio demonstrating Terraform, managed identity, networking, monitoring, governance, cost controls, and GitHub Actions OIDC."
+  >
+  <title>Azure CloudOps Portfolio</title>
+  <link rel="stylesheet" href="/dashboard.css">
 </head>
 <body>
-<div class="app">
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#overview" aria-label="Azure CloudOps home">
+        <span class="brand-mark">A</span>
+        <span>Azure CloudOps<small>Live portfolio environment</small></span>
+      </a>
 
-  <!-- SIDEBAR -->
-  <aside>
-    <a class="brand" href="#overview">
-      <span class="brand-mark"></span>
-      <span>Azure CloudOps<small>Lab · East US</small></span>
-    </a>
+      <nav aria-label="Dashboard">
+        <a href="#overview" data-page="overview" class="active">Overview</a>
+        <a href="#architecture" data-page="architecture">Architecture</a>
+        <a href="#networking" data-page="networking">Networking</a>
+        <a href="#security" data-page="security">Security</a>
+        <a href="#monitoring" data-page="monitoring">Monitoring</a>
+        <a href="#governance" data-page="governance">Governance</a>
+      </nav>
 
-    <nav class="nav" id="nav">
-      <a href="#overview" data-page="overview">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-        Overview
-      </a>
-      <a href="#architecture" data-page="architecture">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M6 8.2v2a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2M12 12.2v3.6"/></svg>
-        Architecture
-      </a>
-      <a href="#networking" data-page="networking">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
-        Networking
-      </a>
-      <a href="#security" data-page="security">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.6 8 10 4.6-2.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg>
-        Security
-      </a>
-      <a href="#monitoring" data-page="monitoring">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 6 4-14 2 6h6"/></svg>
-        Monitoring
-      </a>
-    </nav>
-
-    <div class="side-status">
-      <div class="row"><span>Status</span><span class="dot"><i></i> <span class="glive">Demo ready</span></span></div>
-      <div class="row"><span>Environment</span><b>Portfolio lab</b></div>
-      <div class="row"><span>Resources</span><b class="mono">11</b></div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main>
-    <div class="topbar">
-      <h1 id="pageTitle">Overview</h1>
-      <div class="meta">
-        <span class="synced">sample snapshot</span>
-        <span class="env-pill"><i></i> <span class="glive">Portfolio lab</span></span>
+      <div class="environment">
+        <span><i class="status-dot"></i><b id="sidebar-status">Connecting</b></span>
+        <small>Azure · Terraform · GitHub Actions</small>
       </div>
-    </div>
+    </aside>
 
-    <nav class="mobile-tabs" id="mtabs">
-      <a href="#overview" data-page="overview">Overview</a>
-      <a href="#architecture" data-page="architecture">Architecture</a>
-      <a href="#networking" data-page="networking">Networking</a>
-      <a href="#security" data-page="security">Security</a>
-      <a href="#monitoring" data-page="monitoring">Monitoring</a>
-    </nav>
-
-    <div class="content">
-
-      <!-- ============ OVERVIEW ============ -->
-      <section class="page" id="page-overview">
-        <div class="status-hero" style="margin-bottom:16px">
-          <div class="health-ring"></div>
-          <div class="h">
-            <div class="big">CloudOps architecture demonstration</div>
-            <div class="small" id="overviewSummary">Sample metrics · live Azure integration is planned</div>
-          </div>
-          <span class="live"><i></i> sample</span>
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Operations console</p>
+          <h1 id="page-title">Overview</h1>
         </div>
+        <div class="header-actions">
+          <span id="last-updated">Waiting for Azure</span>
+          <button id="refresh" type="button">Refresh data</button>
+        </div>
+      </header>
 
-        <div class="grid g2">
-          <div class="card">
-            <div class="section-head"><h2>Environment</h2><p>Illustrative state for the planned Azure lab</p></div>
-            <div class="readout">
-              <div class="line"><span class="lk">Environment</span><span class="lv" id="environmentValue">Portfolio lab</span></div>
-              <div class="line"><span class="lk">Status</span><span class="lv"><span class="livedot"></span><span class="glive" id="statusValue">Sample data</span></span></div>
-              <div class="line"><span class="lk">Region</span><span class="lv" id="regionValue">East US</span></div>
-              <div class="line"><span class="lk">Resources</span><span class="lv" id="resourceCount" data-count="11">0</span></div>
-              <div class="line"><span class="lk">Last deployment</span><span class="lv"><span data-count="4">0</span> min ago</span></div>
-              <div class="line"><span class="lk">IaC</span><span class="lv logoval">
-                <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#7B42BC" d="M1.44 0v7.575l6.56 3.79V3.788L1.44 0Zm21.12 4.227-6.56 3.79v7.575l6.56-3.79V4.227ZM8.72 4.23v7.573l6.56 3.79V8.02L8.72 4.23Zm0 8.404v7.576L15.28 24v-7.575l-6.56-3.79Z"/></svg>
-                Terraform</span></div>
-              <div class="line"><span class="lk">CI/CD</span><span class="lv logoval">
-                <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#181717" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-                GitHub Actions</span></div>
-              <div class="line"><span class="lk">Monthly budget</span><span class="lv" id="budgetValue">$5</span></div>
+      <div class="content">
+        <section class="page active" id="page-overview">
+          <div class="hero">
+            <div>
+              <span class="live-pill"><i class="status-dot"></i> Live Azure telemetry</span>
+              <h2>Cloud engineering, shown in operation.</h2>
+              <p>
+                A low-cost Azure environment built with Terraform and deployed through
+                GitHub Actions OIDC. The public dashboard reads privacy-safe operational
+                summaries through a managed-identity Function App.
+              </p>
             </div>
+            <a class="github-link" href="https://github.com/jcheng01/azure-cloud-ops" target="_blank" rel="noreferrer">
+              View source on GitHub
+            </a>
           </div>
 
-          <div class="grid" style="grid-template-columns:1fr 1fr; align-content:start">
-            <div class="tile"><div class="k">Availability</div><div class="v">99.98<small>%</small></div><div class="trend up">30-day</div></div>
-            <div class="tile"><div class="k">Requests (24h)</div><div class="v">3.2<small>k</small></div><div class="trend up">▲ 6%</div></div>
-            <div class="tile"><div class="k">Avg response</div><div class="v">128<small>ms</small></div><div class="trend">p50</div></div>
-            <div class="tile"><div class="k">Failures (24h)</div><div class="v">2</div><div class="trend">0.06%</div></div>
-            <div class="tile"><div class="k">Est. cost</div><div class="v">$3.80</div><div class="trend">of $5 budget</div></div>
-            <div class="tile"><div class="k">Compliance</div><div class="v glive">100<small>%</small></div><div class="trend up">tags &amp; policy</div></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============ ARCHITECTURE ============ -->
-      <section class="page" id="page-architecture">
-        <div class="section-head"><h2>Solution architecture</h2><p>Select a resource to inspect its configuration.</p></div>
-        <div class="arch-wrap">
-          <div class="arch-canvas">
-            <svg class="arch-svg" viewBox="0 0 520 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Azure architecture diagram">
-              <!-- edges -->
-              <path class="arch-edge" d="M110 62 V96"/>
-              <path class="arch-edge" d="M110 138 V172"/>
-              <path class="arch-edge" d="M170 42 H300 V96"/>
-              <path class="arch-edge" d="M300 138 V172"/>
-              <path class="arch-edge" d="M110 214 H300 V214"/>
-              <path class="arch-edge" d="M110 214 V250 H150"/>
-              <path class="arch-edge" d="M110 250 H70 V214"/>
-              <path class="arch-edge" d="M410 42 V214 H360"/>
-
-              <!-- App Service -->
-              <g class="arch-node" data-node="app" tabindex="0">
-                <rect x="40" y="18" width="130" height="44" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="105" y="44" text-anchor="middle">App Service</text>
-              </g>
-              <!-- Managed Identity -->
-              <g class="arch-node" data-node="mi" tabindex="0">
-                <rect x="300" y="18" width="130" height="44" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="365" y="44" text-anchor="middle">Managed Identity</text>
-              </g>
-              <!-- Storage -->
-              <g class="arch-node" data-node="storage" tabindex="0">
-                <rect x="45" y="96" width="130" height="42" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="110" y="121" text-anchor="middle">Storage</text>
-              </g>
-              <!-- Azure Monitor -->
-              <g class="arch-node" data-node="monitor" tabindex="0">
-                <rect x="235" y="96" width="130" height="42" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="300" y="121" text-anchor="middle">Azure Monitor</text>
-              </g>
-              <!-- VNet -->
-              <g class="arch-node" data-node="vnet" tabindex="0">
-                <rect x="45" y="172" width="320" height="44" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="205" y="198" text-anchor="middle">Virtual Network · 10.0.0.0/16</text>
-              </g>
-              <!-- Subnets -->
-              <g class="arch-node" data-node="subnets" tabindex="0">
-                <rect x="30" y="236" width="150" height="42" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="105" y="261" text-anchor="middle">Subnets</text>
-              </g>
-              <!-- NSGs -->
-              <g class="arch-node" data-node="nsg" tabindex="0">
-                <rect x="200" y="236" width="150" height="42" rx="10" fill="#fff" stroke="var(--hairline)" stroke-width="1.4"/>
-                <text class="an-t" x="275" y="261" text-anchor="middle">NSGs</text>
-              </g>
-            </svg>
+          <div class="metrics four">
+            <article class="metric"><span>Azure resources</span><strong id="overview-resources">—</strong><small>Across the portfolio scope</small></article>
+            <article class="metric"><span>Resource groups</span><strong id="overview-groups">—</strong><small>Lab and production</small></article>
+            <article class="metric"><span>Monthly budget</span><strong id="overview-budget">—</strong><small>Actual + forecast alerts</small></article>
+            <article class="metric"><span>Delivery</span><strong class="text-value">OIDC</strong><small>No deployment secret</small></article>
           </div>
 
-          <div class="card detail" id="archDetail">
-            <h3 id="adTitle">App Service</h3>
-            <span class="tag" id="adTag">Microsoft.Web/sites</span>
-            <p id="adDesc">Hosts the React front end and serverless APIs. Public HTTPS endpoint, integrated with the virtual network for outbound calls.</p>
-            <dl id="adSpecs">
-              <div><dt>Tier</dt><dd>Consumption</dd></div>
-              <div><dt>Runtime</dt><dd>Node 20</dd></div>
-              <div><dt>TLS</dt><dd>1.2 min</dd></div>
-            </dl>
+          <div class="grid two">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Platform</p><h3>Current state</h3></div><span class="badge live">Live</span></div>
+              <dl class="facts">
+                <div><dt>Hosting</dt><dd>Azure Static Web Apps</dd></div>
+                <div><dt>API runtime</dt><dd>Azure Functions · Node.js 22</dd></div>
+                <div><dt>Infrastructure</dt><dd>Terraform remote state</dd></div>
+                <div><dt>Regions</dt><dd id="overview-regions">—</dd></div>
+              </dl>
+            </article>
+
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Engineering controls</p><h3>Built into the project</h3></div></div>
+              <ul class="check-list">
+                <li>Managed identity with resource-group-scoped Reader access</li>
+                <li>Segmented VNet with subnet-level network security groups</li>
+                <li>Application Insights, Log Analytics, and HTTP 5xx alerting</li>
+                <li>Audit-only policy, tagging controls, and a $5 budget</li>
+              </ul>
+            </article>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- ============ NETWORKING ============ -->
-      <section class="page" id="page-networking">
-        <div class="grid g4" style="margin-bottom:22px">
-          <div class="tile"><div class="k">Address space</div><div class="v" style="font-size:20px">10.0.0.0/16</div><div class="trend">65,536 addresses</div></div>
-          <div class="tile"><div class="k">Subnets</div><div class="v">3</div><div class="trend">web · app · data</div></div>
-          <div class="tile"><div class="k">NSGs</div><div class="v">3</div><div class="trend">one per subnet</div></div>
-          <div class="tile"><div class="k">Public ingress</div><div class="v" style="font-size:20px">443 only</div><div class="trend up">HTTPS</div></div>
-        </div>
-
-        <div class="card" style="margin-bottom:22px">
-          <div class="section-head"><h2>Subnets &amp; utilization</h2><p>CIDR allocation and address usage per tier</p></div>
-          <table class="data">
-            <thead><tr><th>Subnet</th><th class="mono">CIDR</th><th>NSG</th><th style="width:210px">Utilization</th></tr></thead>
-            <tbody>
-              <tr>
-                <td>snet-web</td><td class="mono">10.0.1.0/24</td><td class="mono">nsg-web</td>
-                <td><div class="util"><div class="bar"><span style="width:5%"></span></div><span class="num">12 / 251</span></div></td>
-              </tr>
-              <tr>
-                <td>snet-app</td><td class="mono">10.0.2.0/24</td><td class="mono">nsg-app</td>
-                <td><div class="util"><div class="bar"><span style="width:3%"></span></div><span class="num">8 / 251</span></div></td>
-              </tr>
-              <tr>
-                <td>snet-data</td><td class="mono">10.0.3.0/24</td><td class="mono">nsg-data</td>
-                <td><div class="util"><div class="bar"><span style="width:2%"></span></div><span class="num">3 / 251</span></div></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="grid g2">
-          <div class="card">
-            <div class="section-head"><h2>NSG rules</h2><p>Effective inbound rules by tier</p></div>
-            <table class="data">
-              <thead><tr><th>Subnet</th><th>Rule</th><th>Source</th><th class="mono">Port</th><th>Action</th></tr></thead>
-              <tbody>
-                <tr><td class="mono">web</td><td>allow-https</td><td>Internet</td><td class="mono">443</td><td><span class="chip allow">Allow</span></td></tr>
-                <tr><td class="mono">app</td><td>from-web</td><td>10.0.1.0/24</td><td class="mono">8080</td><td><span class="chip allow">Allow</span></td></tr>
-                <tr><td class="mono">data</td><td>from-app</td><td>10.0.2.0/24</td><td class="mono">5432</td><td><span class="chip allow">Allow</span></td></tr>
-                <tr><td class="mono">all</td><td>deny-inbound</td><td>Any</td><td class="mono">*</td><td><span class="chip deny">Deny</span></td></tr>
-              </tbody>
-            </table>
+        <section class="page" id="page-architecture">
+          <div class="section-intro">
+            <p class="eyebrow">System design</p>
+            <h2>Public presentation, private control plane.</h2>
+            <p>The browser receives aggregates only. Azure resource access stays inside the Function App's managed identity.</p>
           </div>
 
-          <div class="card">
-            <div class="section-head"><h2>Routing &amp; segmentation</h2><p>Effective routes and tier isolation</p></div>
-            <table class="data" style="margin-bottom:14px">
-              <thead><tr><th>Prefix</th><th>Next hop</th><th>Source</th></tr></thead>
-              <tbody>
-                <tr><td class="mono">10.0.0.0/16</td><td>VNet local</td><td class="chip">Default</td></tr>
-                <tr><td class="mono">0.0.0.0/0</td><td>Internet</td><td class="chip">Default</td></tr>
-              </tbody>
-            </table>
-            <p style="font-size:13px; color:var(--ink-soft); line-height:1.55">
-              Traffic flows one direction only: <span class="mono">web → app → data</span>. Each tier
-              accepts connections solely from the tier above it, so a compromised front end can't
-              reach the data subnet directly.
-            </p>
+          <div class="flow" aria-label="Architecture flow">
+            <article><span>1</span><b>Visitor</b><small>HTTPS browser</small></article>
+            <i>→</i>
+            <article><span>2</span><b>Static Web App</b><small>HTML, CSS, JavaScript</small></article>
+            <i>→</i>
+            <article><span>3</span><b>Function API</b><small>Privacy-safe summaries</small></article>
+            <i>→</i>
+            <article><span>4</span><b>Azure control plane</b><small>Resource Graph + Monitor</small></article>
           </div>
-        </div>
-      </section>
 
-      <!-- ============ SECURITY ============ -->
-      <section class="page" id="page-security">
-        <div class="grid g2" style="margin-bottom:22px">
-          <div class="card">
-            <div class="section-head"><h2>Identity &amp; access path</h2><p>How the app reads Azure without credentials</p></div>
-            <div class="secflow">
-              <div class="n">
-                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.6 8 10 4.6-2.4 8-5 8-10V6z"/></svg></span>
-                <div><div class="t">Managed Identity</div><div class="d">system-assigned · no secret</div></div>
-              </div>
-              <div class="arrow"></div>
-              <div class="n">
-                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 7.6 8 10 4.6-2.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
-                <div><div class="t">RBAC · Reader</div><div class="d">read-only role assignment</div></div>
-              </div>
-              <div class="arrow"></div>
-              <div class="n">
-                <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18"/></svg></span>
-                <div><div class="t">Resource Group</div><div class="d">rg-cloudops-eastus · scope</div></div>
-              </div>
+          <div class="grid three">
+            <article class="card"><p class="eyebrow">Provision</p><h3>Terraform</h3><p>Imports existing infrastructure, stores state remotely, and defines operations controls declaratively.</p></article>
+            <article class="card"><p class="eyebrow">Authenticate</p><h3>Identity-first</h3><p>GitHub uses workload federation. The Function uses a system-assigned identity. No long-lived Azure client secret.</p></article>
+            <article class="card"><p class="eyebrow">Observe</p><h3>Azure Monitor</h3><p>Application Insights, Log Analytics, metrics, diagnostics, and alerts form the operational feedback loop.</p></article>
+          </div>
+        </section>
+
+        <section class="page" id="page-networking">
+          <div class="section-intro"><p class="eyebrow">Live Resource Graph</p><h2>Network segmentation</h2><p>Counts are queried from Azure; sensitive resource identifiers and address ranges are not returned publicly.</p></div>
+          <div class="metrics four">
+            <article class="metric"><span>Virtual networks</span><strong id="network-vnets">—</strong></article>
+            <article class="metric"><span>Subnets</span><strong id="network-subnets">—</strong></article>
+            <article class="metric"><span>NSGs</span><strong id="network-nsgs">—</strong></article>
+            <article class="metric"><span>Protected subnets</span><strong id="network-protected">—</strong></article>
+          </div>
+          <article class="card">
+            <div class="card-head"><div><p class="eyebrow">Three-tier model</p><h3>Traffic boundaries</h3></div><span class="badge" id="network-rules">— rules</span></div>
+            <div class="tiers">
+              <div><b>Web tier</b><small>HTTPS ingress</small></div><i>→</i>
+              <div><b>Application tier</b><small>Web-origin traffic</small></div><i>→</i>
+              <div><b>Data tier</b><small>Application-origin traffic</small></div>
             </div>
+            <p class="note">Each subnet has its own NSG. Explicit allow rules support the intended flow, followed by deny boundaries.</p>
+          </article>
+        </section>
+
+        <section class="page" id="page-security">
+          <div class="section-intro"><p class="eyebrow">Defense in depth</p><h2>Identity and network controls</h2><p>The live endpoint publishes control status, never principal IDs, Azure scopes, tokens, or rule addresses.</p></div>
+          <div class="grid two">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Runtime identity</p><h3>Managed identity</h3></div><span class="badge live">Secretless</span></div>
+              <dl class="facts">
+                <div><dt>Identity</dt><dd id="security-identity">—</dd></div>
+                <div><dt>Azure role</dt><dd id="security-role">—</dd></div>
+                <div><dt>Scoped groups</dt><dd id="security-scopes">—</dd></div>
+                <div><dt>Stored credentials</dt><dd id="security-creds">—</dd></div>
+              </dl>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Network enforcement</p><h3>Custom NSG rules</h3></div></div>
+              <div class="split-number"><div><strong id="security-allow">—</strong><small>Allow</small></div><div><strong id="security-deny">—</strong><small>Deny</small></div></div>
+              <p class="note"><span id="security-nsgs">—</span> network security groups · TLS <span id="security-tls">—</span> minimum</p>
+            </article>
           </div>
+          <article class="card banner">
+            <div><p class="eyebrow">CI/CD authentication</p><h3>GitHub Actions workload federation</h3></div>
+            <p>No long-lived Azure client secret is stored in GitHub. OIDC tokens are short-lived and branch-bound.</p>
+          </article>
+        </section>
 
-          <div class="card">
-            <div class="section-head"><h2>Security posture</h2><p>Verified controls across the estate</p></div>
-            <div class="posture">
-              <div class="p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><div><div class="t">Least privilege</div><div class="d">Reader role only — no write or delete permissions</div></div></div>
-              <div class="p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><div><div class="t">No credentials in code</div><div class="d">Managed identity replaces keys and connection strings</div></div></div>
-              <div class="p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><div><div class="t">HTTPS enforced</div><div class="d">TLS 1.2 minimum, HTTP redirected on every endpoint</div></div></div>
-              <div class="p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><div><div class="t">Storage secured</div><div class="d">Private access, public blob disabled, TLS enforced</div></div></div>
-            </div>
+        <section class="page" id="page-monitoring">
+          <div class="section-intro"><p class="eyebrow">Last 24 hours</p><h2>Function health</h2><p>Metrics come from the Azure Monitor API and may take several minutes to appear after deployment.</p></div>
+          <div class="metrics four">
+            <article class="metric"><span>Requests</span><strong id="monitor-requests">—</strong><small>HTTP requests</small></article>
+            <article class="metric"><span>Average response</span><strong id="monitor-response">—</strong><small>Milliseconds</small></article>
+            <article class="metric"><span>HTTP 5xx</span><strong id="monitor-failures">—</strong><small>Server errors</small></article>
+            <article class="metric"><span>Success rate</span><strong id="monitor-success">—</strong><small>Requests minus 5xx</small></article>
           </div>
-        </div>
-
-        <div class="card">
-          <div class="section-head"><h2>RBAC assignments</h2><p>Every role granted in the resource group</p></div>
-          <table class="data">
-            <thead><tr><th>Principal</th><th>Type</th><th>Role</th><th>Scope</th></tr></thead>
-            <tbody>
-              <tr><td class="mono">func-cloudops</td><td>Managed identity</td><td><span class="chip allow">Reader</span></td><td class="mono">rg-cloudops-eastus</td></tr>
-              <tr><td class="mono">gh-actions-oidc</td><td>Federated credential</td><td><span class="chip">Contributor</span></td><td class="mono">rg-cloudops-eastus</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- ============ MONITORING ============ -->
-      <section class="page" id="page-monitoring">
-        <div class="section-head"><h2>Telemetry</h2><p>Sample signals showing the planned Application Insights and Azure Monitor experience</p></div>
-        <div class="grid g3" style="margin-bottom:16px">
-          <div class="tile">
-            <div class="k">Requests</div><div class="v">3.2<small>k / 24h</small></div>
-            <svg class="spark" viewBox="0 0 200 46" preserveAspectRatio="none"><polyline fill="none" stroke="var(--azure)" stroke-width="2" points="0,34 25,30 50,32 75,22 100,26 125,16 150,20 175,10 200,14"/></svg>
+          <div class="grid two">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Telemetry pipeline</p><h3>Observability</h3></div><span class="badge live">Enabled</span></div>
+              <dl class="facts">
+                <div><dt>Application telemetry</dt><dd>Application Insights</dd></div>
+                <div><dt>Central logs</dt><dd>Log Analytics</dd></div>
+                <div><dt>Retention</dt><dd id="monitor-retention">—</dd></div>
+                <div><dt>Daily ingestion cap</dt><dd id="monitor-quota">—</dd></div>
+              </dl>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Automated response</p><h3>HTTP 5xx alert</h3></div><span class="badge live" id="monitor-alert">Enabled</span></div>
+              <p class="large-copy" id="monitor-condition">Any server error over five minutes triggers the action group.</p>
+              <p class="note">The same action group receives budget notifications.</p>
+            </article>
           </div>
-          <div class="tile">
-            <div class="k">Response time (p50)</div><div class="v">128<small>ms</small></div>
-            <svg class="spark" viewBox="0 0 200 46" preserveAspectRatio="none"><polyline fill="none" stroke="var(--azure)" stroke-width="2" points="0,20 25,24 50,18 75,22 100,16 125,20 150,14 175,18 200,15"/></svg>
+        </section>
+
+        <section class="page" id="page-governance">
+          <div class="section-intro"><p class="eyebrow">Azure Policy + Cost Management</p><h2>Guardrails without deployment friction</h2><p>Policies audit both resource groups so gaps are visible without blocking this learning environment.</p></div>
+          <div class="metrics four">
+            <article class="metric"><span>Policy assignments</span><strong id="gov-assignments">—</strong></article>
+            <article class="metric"><span>Resources evaluated</span><strong id="gov-resources">—</strong></article>
+            <article class="metric"><span>Monthly budget</span><strong id="gov-budget">—</strong></article>
+            <article class="metric"><span>Policy effect</span><strong class="text-value" id="gov-effect">—</strong></article>
           </div>
-          <div class="tile">
-            <div class="k">Failures</div><div class="v">2<small> / 24h</small></div>
-            <svg class="spark" viewBox="0 0 200 46" preserveAspectRatio="none"><polyline fill="none" stroke="var(--amber)" stroke-width="2" points="0,40 25,40 50,38 75,40 100,40 125,32 150,40 175,40 200,38"/></svg>
+          <div class="grid two">
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Metadata</p><h3>Required-tag coverage</h3></div></div>
+              <div id="tag-coverage" class="coverage"><p class="loading">Loading Azure Policy data…</p></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><p class="eyebrow">Location control</p><h3>Allowed regions</h3></div><span class="badge" id="location-status">—</span></div>
+              <p class="large-copy">East US, East US 2, and global resources are within the portfolio standard.</p>
+              <p class="note"><span id="invalid-locations">—</span> resources currently outside the allowed list.</p>
+            </article>
           </div>
-        </div>
-        <div class="grid g2" style="margin-bottom:34px">
-          <div class="tile"><div class="k">Availability (30-day)</div><div class="v glive">99.98<small>%</small></div><div class="trend up">SLA target 99.9%</div></div>
-          <div class="tile"><div class="k">Resource count</div><div class="v">11</div><div class="trend">across 1 resource group</div></div>
-        </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-        <div class="section-head spaced"><h2>Governance &amp; policy</h2><p>Azure Policy audits every resource for required metadata</p></div>
-        <div class="grid g2">
-          <div class="card">
-            <div class="section-head"><h2>Required tags</h2><p>Audited by policy on create and update</p></div>
-            <table class="data">
-              <thead><tr><th>Tag</th><th>Coverage</th><th>Status</th></tr></thead>
-              <tbody>
-                <tr><td class="mono">Environment</td><td class="mono">11 / 11</td><td><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td></tr>
-                <tr><td class="mono">Owner</td><td class="mono">11 / 11</td><td><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td></tr>
-                <tr><td class="mono">Project</td><td class="mono">11 / 11</td><td><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td></tr>
-                <tr><td class="mono">CostCenter</td><td class="mono">11 / 11</td><td><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="card compliance">
-            <div class="section-head"><h2>Governance compliance</h2><p>Policy evaluation summary</p></div>
-            <div class="p"><span class="t">Required tags</span><span class="check">100% <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
-            <div class="p"><span class="t">Allowed Azure region</span><span class="check">Compliant <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
-            <div class="p"><span class="t">Resource naming</span><span class="check">Compliant <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></div>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-</div>
-
-<script>
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var pages = ["overview","architecture","networking","security","monitoring"];
-  var titles = {
-    overview: "Overview", architecture: "Architecture", networking: "Networking",
-    security: "Security", monitoring: "Monitoring"
-  };
-
-  function setActive(page) {
-    if (pages.indexOf(page) === -1) page = "overview";
-    document.querySelectorAll(".page").forEach(function (p) { p.classList.remove("active"); });
-    var el = document.getElementById("page-" + page);
-    if (el) el.classList.add("active");
-    document.querySelectorAll("[data-page]").forEach(function (a) {
-      a.classList.toggle("active", a.getAttribute("data-page") === page);
-    });
-    document.getElementById("pageTitle").textContent = titles[page];
-    document.querySelector("main").scrollTo && window.scrollTo(0, 0);
-    if (page === "overview") runCounts();
-  }
-
-  function runCounts() {
-    document.querySelectorAll("#page-overview [data-count]").forEach(function (el) {
-      var target = parseInt(el.getAttribute("data-count"), 10);
-      if (reduce || isNaN(target)) { el.textContent = target; return; }
-      var dur = 700, start = performance.now();
-      function tick(now) {
-        var p = Math.min((now - start) / dur, 1);
-        el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
-        if (p < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    });
-  }
-
-  // architecture detail data
-  var nodeData = {
-    app: { t: "Static Web Apps", tag: "Microsoft.Web/staticSites",
-      d: "Hosts the public HTML, CSS, and JavaScript CloudOps dashboard over HTTPS. The initial /api endpoint is a managed Static Web Apps Function; the final live-data design uses a separate Azure Function App with managed identity.",
-      s: [["Plan","Free"],["Frontend","HTML / CSS / JS"],["HTTPS","Enabled"]] },
-    mi: { t: "Managed Identity", tag: "system-assigned",
-      d: "The final Azure Function App uses a system-assigned managed identity with Reader access to query Azure state without storing service-principal credentials.",
-      s: [["Type","System"],["Role","Reader"],["Secrets","None"]] },
-    storage: { t: "Storage Account", tag: "Microsoft.Storage",
-      d: "Lab storage resource used to demonstrate secure Azure configuration, tagging, monitoring, and least-privilege access patterns.",
-      s: [["SKU","Standard_LRS"],["Public blob","Disabled"],["TLS","Enforced"]] },
-    monitor: { t: "Azure Monitor", tag: "Microsoft.Insights",
-      d: "Collects requests, latency, failures, and availability through Application Insights, with alert rules and budgets.",
-      s: [["Signals","4"],["Alerts","On"],["Retention","30 days"]] },
-    vnet: { t: "Virtual Network", tag: "10.0.0.0/16",
-      d: "Private network boundary for the workload. Segments the estate into isolated web, app, and data tiers.",
-      s: [["Space","10.0.0.0/16"],["Subnets","3"],["Peering","None"]] },
-    subnets: { t: "Subnets", tag: "3 tiers",
-      d: "Web, app, and data subnets, each a /24. Traffic is permitted only from the tier directly above.",
-      s: [["web","10.0.1.0/24"],["app","10.0.2.0/24"],["data","10.0.3.0/24"]] },
-    nsg: { t: "Network Security Groups", tag: "3 attached",
-      d: "One NSG per subnet. Public ingress is limited to 443; all other inbound traffic is denied by default.",
-      s: [["Ingress","443 only"],["Default","Deny"],["Attached","3"]] }
-  };
-
-  function selectNode(key) {
-    var n = nodeData[key]; if (!n) return;
-    document.querySelectorAll(".arch-node").forEach(function (g) {
-      g.classList.toggle("sel", g.getAttribute("data-node") === key);
-    });
-    document.getElementById("adTitle").textContent = n.t;
-    document.getElementById("adTag").textContent = n.tag;
-    document.getElementById("adDesc").textContent = n.d;
-    document.getElementById("adSpecs").innerHTML = n.s.map(function (r) {
-      return "<div><dt>" + r[0] + "</dt><dd>" + r[1] + "</dd></div>";
-    }).join("");
-  }
-
-  document.querySelectorAll(".arch-node").forEach(function (g) {
-    function act() { selectNode(g.getAttribute("data-node")); }
-    g.addEventListener("click", act);
-    g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
-  });
-
-  // Standalone Azure Function API
-  var overviewApiUrl =
-    "https://func-azure-cloudops-jcheng01.azurewebsites.net/api/overview";
-
-  async function loadOverview() {
-    var statusValue = document.getElementById("statusValue");
-    var summary = document.getElementById("overviewSummary");
-
-    try {
-      statusValue.textContent = "Loading Azure data";
-
-      var response = await fetch(overviewApiUrl, {
-        headers: {
-          Accept: "application/json"
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error("API returned HTTP " + response.status);
-      }
-
-      var data = await response.json();
-
-      document.getElementById("environmentValue").textContent =
-        data.environment || "Portfolio lab";
-
-      statusValue.textContent = data.status || "Live Azure data";
-
-      document.getElementById("regionValue").textContent =
-        data.region || "East US";
-
-      var resourceElement = document.getElementById("resourceCount");
-      var resourceCount = Number(data.resources || 0);
-
-      resourceElement.setAttribute("data-count", String(resourceCount));
-
-      document.getElementById("budgetValue").textContent =
-        "$" + Number(data.monthlyBudget || 0);
-
-      summary.textContent =
-        resourceCount +
-        " resources · live Azure Resource Graph · managed identity";
-
-      runCounts();
-    } catch (error) {
-      console.error("Unable to load Azure overview:", error);
-
-      statusValue.textContent = "API unavailable";
-      summary.textContent =
-        "Unable to retrieve live Azure Resource Graph data";
-    }
-  }
-
-  // routing
-  window.addEventListener("hashchange", function () {
-    setActive((location.hash || "#overview").slice(1));
-  });
-  setActive((location.hash || "#overview").slice(1));
-  loadOverview();
-</script>
+  <script src="/dashboard.js" defer></script>
 </body>
 </html>
