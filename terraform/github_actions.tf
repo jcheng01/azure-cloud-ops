@@ -18,9 +18,10 @@ resource "azurerm_federated_identity_credential" "github_actions_main" {
 
 resource "azurerm_role_assignment" "github_actions_function_deploy" {
   scope                = azurerm_function_app_flex_consumption.cloudops.id
-  role_definition_name = "Website Contributor"
-  principal_id         = azurerm_user_assigned_identity.github_actions.principal_id
-  principal_type       = "ServicePrincipal"
+  role_definition_name             = "Website Contributor"
+  principal_id                     = azurerm_user_assigned_identity.github_actions.principal_id
+  principal_type                   = "ServicePrincipal"
+  skip_service_principal_aad_check = true
 }
 
 output "github_actions_client_id" {
