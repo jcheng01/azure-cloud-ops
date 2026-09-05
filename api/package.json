@@ -1,18 +1,16 @@
 {
   "name": "cloudops-api",
   "version": "1.0.0",
-  "description": "Azure Functions API for the CloudOps dashboard",
+  "private": true,
+  "description": "Read-only Azure Functions API for the CloudOps dashboard",
   "main": "src/functions/*.js",
   "scripts": {
-    "start": "func start",
-    "test": "echo \"No tests yet\" && exit 0"
+    "start": "func start --javascript",
+    "test": "node --test"
   },
   "dependencies": {
     "@azure/arm-resourcegraph": "^5.0.0",
     "@azure/functions": "^4.5.0",
     "@azure/identity": "^4.13.2"
-  },
-  "comments": {
-    "live-data": "When you wire this to real Azure state, add: npm install @azure/identity @azure/arm-resourcegraph @azure/monitor-query"
   }
 }
