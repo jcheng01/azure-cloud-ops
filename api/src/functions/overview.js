@@ -1,54 +1,77 @@
-const { app } = require('@azure/functions');
+const { app } = require("@azure/functions");
+const { DefaultAzureCredential } = require("@azure/identity");
+const { ResourceGraphClient } = require("@azure/arm-resourcegraph");
 
-/**
- * GET /api/overview
- *
- * Returns the environment summary shown on the dashboard's Overview page.
- *
- * Right now it returns static sample data, so the site works before any Azure
- * wiring exists. When you're ready to pull live data:
- *   1. In the API folder, run:
- *        npm install @azure/identity @azure/arm-resourcegraph
- *   2. Give this Function App's system-assigned managed identity the built-in
- *      "Reader" role on your resource group (or subscription).
- *   3. Uncomment the LIVE DATA block below and delete the sample values you
- *      no longer need.
- */
-app.http('overview', {
-  methods: ['GET'],
-  authLevel: 'anonymous',
-  route: 'overview',
+app.http("overview", {
+  methods: ["GET"],
+  authLevel: "anonymous",
+  route: "overview",
+
   handler: async (request, context) => {
-    // ---------- SAMPLE DATA (replace once live) ----------
-    const data = {
-      environment: 'Portfolio lab',
-      status: 'Sample data',
-      region: 'East US',
-      resources: 11,
-      lastDeploymentMinutes: 4,
-      iac: 'Terraform',
-      cicd: 'GitHub Actions',
-      monthlyBudget: 5
-    };
+    const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
+    const resourceGroupName =
+      process.env.RESOURCE_GROUP_NAME || "rg-cloudops-lab";
 
-    // ---------- LIVE DATA (enable later) ----------
-    // const { DefaultAzureCredential } = require('@azure/identity');
-    // const { ResourceGraphClient } = require('@azure/arm-resourcegraph');
-    //
-    // const resourceGroup = process.env.TARGET_RESOURCE_GROUP; // e.g. rg-cloudops-eastus
-    // const credential = new DefaultAzureCredential();          // uses the managed identity in Azure
-    // const client = new ResourceGraphClient(credential);
-    //
-    // const countResult = await client.resources({
-    //   query: `Resources | where resourceGroup =~ '${resourceGroup}' | summarize total = count()`
-    // });
-    // data.resources = countResult.data[0].total;
+    if (!subscriptionId) {
+      return {
+        status: 500,
+        jsonBody: {
+          status: "Configuration error",
+          message: "AZURE_SUBSCRIPTION_ID is not configured.",
+        },
+      };
+    }
 
-    context.log(`overview requested — returning ${data.resources} resources`);
+    try {
+      const credential = new DefaultAzureCredential();
 
-    return {
-      jsonBody: data,
-      headers: { 'Cache-Control': 'no-store' }
-    };
-  }
+      const resourceGraphClient = new ResourceGraphClient(
+        credential,
+        subscriptionId
+      );
+
+      const query = `
+        Resources
+        | where resourceGroup =~ '${resourceGroupName}'
+        | summarize resourceCount = count()
+      `;
+
+      const result = await resourceGraphClient.resources({
+        subscriptions: [subscriptionId],
+        query,
+      });
+
+      const rows = Array.isArray(result.data) ? result.data : [];
+      const resourceCount = Number(rows[0]?.resourceCount ?? 0);
+
+      return {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+        jsonBody: {
+          environment: "Portfolio lab",
+          status: "Live Azure data",
+          region: "East US",
+          resources: resourceCount,
+          lastDeploymentMinutes: 4,
+          iac: "Terraform",
+          cicd: "GitHub Actions",
+          monthlyBudget: 5,
+          generatedAt: new Date().toISOString(),
+        },
+      };
+    } catch (error) {
+      context.error("Azure Resource Graph query failed.", error);
+
+      return {
+        status: 500,
+        jsonBody: {
+          status: "Azure query failed",
+          message: error.message,
+        },
+      };
+    }
+  },
 });

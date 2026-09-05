@@ -52,7 +52,7 @@ resource "azurerm_function_app_flex_consumption" "cloudops" {
   storage_access_key          = azurerm_storage_account.function.primary_access_key
 
   runtime_name           = "node"
-  runtime_version        = "20"
+  runtime_version        = "22"
   instance_memory_in_mb  = 512
   maximum_instance_count = 5
 

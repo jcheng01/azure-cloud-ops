@@ -8,7 +8,9 @@
     "test": "echo \"No tests yet\" && exit 0"
   },
   "dependencies": {
-    "@azure/functions": "^4.5.0"
+    "@azure/arm-resourcegraph": "^5.0.0",
+    "@azure/functions": "^4.5.0",
+    "@azure/identity": "^4.13.2"
   },
   "comments": {
     "live-data": "When you wire this to real Azure state, add: npm install @azure/identity @azure/arm-resourcegraph @azure/monitor-query"
