@@ -17,8 +17,8 @@ resource "azurerm_application_insights" "function" {
   workspace_id        = azurerm_log_analytics_workspace.cloudops.id
   application_type    = "web"
 
-  retention_in_days    = 30
-  sampling_percentage  = 100
+  retention_in_days   = 30
+  sampling_percentage = 100
 
   tags = local.production_tags
 }

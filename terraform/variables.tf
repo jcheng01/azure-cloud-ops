@@ -52,3 +52,9 @@ variable "tags" {
     Project     = "AzureCloudOps"
   }
 }
+variable "alert_email_address" {
+  description = "Email address that receives Azure Monitor alerts."
+  type        = string
+  sensitive   = true
+  nullable    = false
+}
