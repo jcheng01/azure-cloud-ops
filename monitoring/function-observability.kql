@@ -1,0 +1,117 @@
+// Azure CloudOps Function App observability queries.
+//
+// Run these queries from:
+// Application Insights > appi-azure-cloudops > Logs
+//
+// Highlight one query at a time before selecting Run.
+
+// ------------------------------------------------------------
+// 1. Recent requests
+// Shows the most recent API calls, their status and duration.
+// ------------------------------------------------------------
+
+requests
+| where timestamp > ago(1h)
+| project
+    timestamp,
+    name,
+    url,
+    resultCode,
+    success,
+    duration,
+    operation_Id
+| order by timestamp desc
+
+
+// ------------------------------------------------------------
+// 2. Operational summary
+// Groups request volume, failures and latency into 15-minute
+// periods.
+// ------------------------------------------------------------
+
+requests
+| where timestamp > ago(24h)
+| summarize
+    TotalRequests = count(),
+    FailedRequests = countif(success == false),
+    AverageDurationMs = round(avg(duration) / 1ms, 2),
+    P95DurationMs = round(percentile(duration, 95) / 1ms, 2)
+    by bin(timestamp, 15m)
+| order by timestamp desc
+
+
+// ------------------------------------------------------------
+// 3. HTTP failures
+// Finds failed requests and server errors.
+// ------------------------------------------------------------
+
+requests
+| where timestamp > ago(24h)
+| where success == false or toint(resultCode) >= 500
+| project
+    timestamp,
+    name,
+    resultCode,
+    duration,
+    operation_Id,
+    url
+| order by timestamp desc
+
+
+// ------------------------------------------------------------
+// 4. Application exceptions
+// Shows unhandled exceptions recorded by Application Insights.
+// ------------------------------------------------------------
+
+exceptions
+| where timestamp > ago(24h)
+| project
+    timestamp,
+    type,
+    outerMessage,
+    problemId,
+    operation_Id
+| order by timestamp desc
+
+
+// ------------------------------------------------------------
+// 5. Function traces
+// Searches application and Functions-host log messages.
+// ------------------------------------------------------------
+
+traces
+| where timestamp > ago(1h)
+| project
+    timestamp,
+    severityLevel,
+    message,
+    operation_Id
+| order by timestamp desc
+
+
+// ------------------------------------------------------------
+// 6. Slow requests
+// Finds API calls taking longer than one second.
+// ------------------------------------------------------------
+
+requests
+| where timestamp > ago(24h)
+| where duration > 1s
+| project
+    timestamp,
+    name,
+    resultCode,
+    duration,
+    operation_Id
+| order by duration desc
+
+
+// ------------------------------------------------------------
+// 7. Request results by HTTP status code
+// Useful for spotting increases in 4xx or 5xx responses.
+// ------------------------------------------------------------
+
+requests
+| where timestamp > ago(24h)
+| summarize RequestCount = count() by resultCode
+| order by RequestCount desc
