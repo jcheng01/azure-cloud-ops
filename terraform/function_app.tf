@@ -61,7 +61,7 @@ resource "azurerm_function_app_flex_consumption" "cloudops" {
 
   app_settings = {
     AZURE_SUBSCRIPTION_ID = var.subscription_id
-    AZURE_RESOURCE_GROUP  = data.azurerm_resource_group.cloudops.name
+    RESOURCE_GROUP_NAME   = data.azurerm_resource_group.cloudops.name
   }
 
   identity {
