@@ -35,3 +35,11 @@ output "network_security_groups" {
     }
   }
 }
+
+output "monitoring" {
+  description = "Azure Monitor resources used by the production Function App."
+  value = {
+    log_analytics_workspace = azurerm_log_analytics_workspace.cloudops.name
+    application_insights    = azurerm_application_insights.function.name
+  }
+}

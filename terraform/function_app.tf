@@ -60,8 +60,10 @@ resource "azurerm_function_app_flex_consumption" "cloudops" {
   public_network_access_enabled = true
 
   app_settings = {
-    AZURE_SUBSCRIPTION_ID = var.subscription_id
-    RESOURCE_GROUP_NAME   = data.azurerm_resource_group.cloudops.name
+    APPLICATIONINSIGHTS_CONNECTION_STRING      = azurerm_application_insights.function.connection_string
+    ApplicationInsightsAgent_EXTENSION_VERSION = "~3"
+    AZURE_SUBSCRIPTION_ID                      = var.subscription_id
+    RESOURCE_GROUP_NAME                        = data.azurerm_resource_group.cloudops.name
   }
 
   identity {
