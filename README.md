@@ -1,134 +1,119 @@
-# Azure CloudOps Dashboard
+# Azure CloudOps Portfolio
 
-A public Azure operations portfolio that demonstrates how a cloud engineer deploys, secures, monitors, governs, and automates a small Azure environment.
+A live, public cloud-engineering portfolio that demonstrates how a small Azure environment is provisioned, secured, observed, governed, and delivered.
 
-> **Current status:** V1 source is ready for Azure Static Web Apps deployment. The dashboard clearly displays sample metrics until live Azure integration is implemented.
+**Live dashboard:** https://wonderful-bush-0b51e040f.6.azurestaticapps.net
 
-## Project goal
+The dashboard uses real Azure control-plane data. Its anonymous API deliberately publishes only aggregate health and compliance signals—never subscription IDs, resource IDs, role-assignment scopes, tokens, or network address ranges.
 
-This project goes beyond certification knowledge by presenting a production-style CloudOps workflow: application hosting, infrastructure as code, networking, identity, observability, governance, CI/CD, and cost control.
+## What this project demonstrates
 
-## Target architecture
+- Existing Azure networking imported into Terraform without recreation
+- Remote Terraform state in Azure Blob Storage with Azure AD authentication
+- Three-tier VNet segmentation with subnet-level NSGs
+- Azure Static Web Apps for a public dashboard
+- Azure Functions Flex Consumption running Node.js 22
+- System-assigned managed identity with resource-group-scoped Reader access
+- GitHub Actions deployment through OIDC workload federation
+- Application Insights and Log Analytics diagnostics
+- HTTP 5xx alerting through an Azure Monitor action group
+- Audit-only Azure Policy for required tags and allowed locations
+- A $5 monthly budget with actual and forecast notifications
+- Privacy-safe live APIs backed by Azure Resource Graph and Azure Monitor
+- Automated API tests and Terraform format/validation checks
+
+## Architecture
 
 ```mermaid
 flowchart TD
-    U["Public visitor"] --> SWA["Azure Static Web Apps"]
-    SWA --> API["Azure Functions API"]
-    API --> RG["Azure Resource Graph"]
-    API --> MON["Application Insights"]
-    TF["Terraform"] --> INFRA["Azure infrastructure"]
-    GH["GitHub Actions"] --> SWA
-    GH --> TF
-    INFRA --> NET["VNet, subnets, NSGs"]
-    INFRA --> GOV["RBAC, Policy, tags"]
-    INFRA --> OPS["Monitor, alerts, budget"]
+    Visitor["Public visitor"] -->|HTTPS| SWA["Azure Static Web Apps"]
+    SWA -->|Aggregate JSON| API["Azure Functions · Node 22"]
+    API -->|Managed identity · Reader| ARG["Azure Resource Graph"]
+    API -->|Managed identity · Reader| MON["Azure Monitor metrics"]
+    TF["Terraform · remote state"] --> Azure["Azure resources"]
+    GH["GitHub Actions · OIDC"] --> SWA
+    GH --> API
+    Azure --> NET["VNet · subnets · NSGs"]
+    Azure --> OPS["Insights · logs · alert · budget"]
+    Azure --> GOV["Policy · tags · RBAC"]
 ```
 
-## Current V1
+More detail is in [docs/architecture.md](docs/architecture.md).
 
-- `src/index.html` contains a responsive HTML/CSS/JavaScript dashboard.
-- `api/src/functions/overview.js` exposes `GET /api/overview` using Azure Functions Node.js v4.
-- The API currently returns sample data so deployment can be validated before Azure Resource Graph integration.
-- `src/staticwebapp.config.json` defines SPA fallback, API routing, and security headers.
-- `api/package-lock.json` provides reproducible dependency installation.
+## Live API
 
-## Technologies
-
-| Area | Services and tools |
+| Endpoint | Public response |
 |---|---|
-| Front end | HTML, CSS, JavaScript, Azure Static Web Apps |
-| API | Azure Functions |
-| Infrastructure | Terraform, VNet, subnets, NSGs |
-| Identity and security | Managed identity, RBAC, HTTPS |
-| Operations | Azure Monitor, Application Insights, alerts, budgets |
-| Governance | Azure Policy and resource tags |
-| Automation | GitHub Actions |
+| `GET /api/overview` | Resource totals, region set, delivery model, budget |
+| `GET /api/networking` | VNet, subnet, NSG, and protection counts |
+| `GET /api/security` | Identity, TLS, OIDC, and NSG control status |
+| `GET /api/monitoring` | 24-hour request, latency, HTTP 5xx, and success metrics |
+| `GET /api/governance` | Tag coverage, location compliance, policies, and budget thresholds |
 
-## Repository structure
+The API uses the Function App's system-assigned identity. No Azure credential is present in application code.
+
+## Repository layout
 
 ```text
-azure-cloud-ops/
-├── src/
-│   ├── index.html
-│   └── staticwebapp.config.json
-├── api/
-│   ├── host.json
-│   ├── package.json
-│   ├── package-lock.json
-│   └── src/functions/
-│       └── overview.js
-├── docs/
-│   └── architecture.md
-├── .github/workflows/       # Azure adds the deployment workflow
-├── .gitignore
-├── LICENSE
-└── README.md
+.
+├── .github/workflows/       # App deployment and Terraform validation
+├── api/                     # Functions, shared helpers, and tests
+├── docs/                    # Architecture, runbook, troubleshooting
+├── monitoring/              # KQL investigations
+├── src/                     # Static dashboard
+└── terraform/               # Azure infrastructure
 ```
 
-## Local preview
+## Deploy infrastructure
 
-Static front end:
+Requirements: Terraform, Azure CLI, an authenticated Azure session, and Azure permissions for RBAC, Policy, Monitor, and Cost Management.
 
 ```powershell
-cd src
-python -m http.server 8080
+Set-Location .\terraform
+
+$env:TF_VAR_subscription_id = az account show --query id --output tsv
+$env:TF_VAR_alert_email_address = "your-email@example.com"
+
+terraform init
+terraform fmt -check -recursive
+terraform validate
+terraform plan "-out=cloudops.tfplan"
+terraform apply "cloudops.tfplan"
 ```
 
-Open `http://localhost:8080`.
+Review the plan before applying. Terraform state and plan files are ignored by Git.
 
-Front end and managed API with the Azure Static Web Apps CLI:
+## Application development
 
 ```powershell
-npm install -g @azure/static-web-apps-cli
-cd api
+Set-Location .\api
 npm install
-cd ..
-swa start src --api-location api
+npm test
+func start --javascript
 ```
 
-Open `http://localhost:4280`.
+See [docs/runbook.md](docs/runbook.md) for environment variables and production verification.
 
-## Azure Static Web Apps deployment settings
+## CI/CD
 
-When creating the Azure Static Web App, connect this repository and use:
+| Workflow | Trigger | Authentication | Purpose |
+|---|---|---|---|
+| Static Web App | Changes under `src/` | SWA deployment token | Deploy dashboard |
+| Function App | Changes under `api/` | Azure OIDC | Test and deploy API |
+| Terraform checks | Changes under `terraform/` | None | Format and validate |
 
-| Setting | Value |
-|---|---|
-| Branch | `main` |
-| App location | `src` |
-| API location | `api` |
-| Output location | Leave blank |
+Infrastructure apply remains a reviewed operator action so an unreviewed push cannot mutate Azure.
 
-Azure will create the GitHub Actions workflow and deployment secret automatically.
+## Cost and safety
 
-## Planned live-data security model
-
-The later standalone Function App will use:
-
-- A system-assigned managed identity
-- The built-in **Reader** role scoped only to the CloudOps lab resource group
-- Azure Resource Graph for resource inventory
-- HTTPS-only access
-- CORS restricted to the deployed Static Web Apps hostname
-- No service-principal secrets in source control
-
-## Delivery roadmap
-
-- [x] Create the public GitHub repository
-- [x] Add the V1 dashboard and sample API
-- [x] Add repository documentation and secret-safe ignore rules
-- [ ] Deploy with Azure Static Web Apps
-- [ ] Add Terraform infrastructure
-- [ ] Configure managed identity and scoped RBAC
-- [ ] Replace sample metrics with Azure-backed data
-- [ ] Add Application Insights, alerts, and a cost budget
-- [ ] Add screenshots, troubleshooting notes, and the public URL
-
-## Cost approach
-
-The project favors free or serverless components, conservative telemetry retention, budget alerts, and short-lived infrastructure labs so it remains suitable for an Azure pay-as-you-go subscription.
+- Static Web Apps uses the Free tier.
+- Functions uses Flex Consumption with 512 MB instances.
+- Log Analytics retains 30 days, capped at 0.5 GB daily ingestion.
+- A $5 monthly budget covers both project resource groups.
+- Policies use `Audit`, not `Deny`.
+- Public endpoints return aggregates only.
 
 ## Author
 
 **Justin Cheng**  
-AZ-104 Certified | Building toward a junior cloud engineering role
+AZ-104 certified · Building toward a junior cloud engineering role
