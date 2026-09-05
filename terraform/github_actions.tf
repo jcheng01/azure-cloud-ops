@@ -37,4 +37,5 @@ output "github_actions_tenant_id" {
 output "github_actions_subscription_id" {
   description = "Subscription ID containing the Function App."
   value       = var.subscription_id
+  sensitive   = true
 }
